@@ -1,0 +1,77 @@
+﻿@{
+    ViewBag.Title = "SEO Analyzer";
+}
+
+@*Filter checkboxes*@
+<input id="filterlink" name="filterlink" type="checkbox"/>External links<br/>
+<input id="filtermeta" name="filtermeta" type="checkbox"/>Meta words<br/>
+<input id="filterwords" name="filterwords" type="checkbox"/>Words on page<br/>
+
+@* Ajax form for sending request *@
+@using (Ajax.BeginForm("Analyze", new AjaxOptions
+{
+    OnSuccess = "OnSuccess",
+    LoadingElementId = "loading",
+    LoadingElementDuration = 1000
+}))
+{
+    //Url field
+    <input id="urlfield" type="text" name="url"/>
+    //Analyze btn
+    <input type="submit" value="Analyze"/>
+}
+
+@*Element which is displaying during requesting*@
+<div id="loading" style="color: Red; display: none; font-weight: bold;">
+    <p>Processed...</p>
+</div>
+
+
+@* Element with result of request *@
+<div id="results"></div>
+
+<script type="text/javascript">
+    //Function executes after success request
+    function OnSuccess(data) {
+
+        var results = $('#results');
+        results.empty();
+        т;
+        if (data.Result == false) {
+            results.append('<b>' + data.Message + '</b><br>');
+        }
+
+        if (data.Result == true && $("#filterlink").prop("checked")) {
+            results.append('<b>Count of external links is ' + data.CountLinks + '</b><br>');
+        }
+        if (!data.RepWordsFromMeta.length > 0) {
+            results.append('<b>Keywords in the meta are absent</b><br>');
+        } else if ($("#filtermeta").prop("checked")) {
+            results.append('<br><b>Number of occurrences on the page of each word listed in meta tags</b><br>');
+            //Create first table with metakeywords
+            results.append('<table id="keywordstable" class="tablesorter" cellspacing="0" width="50%"></table>');
+            $("#keywordstable").append('<thead><tr><th>Keywords</th><th>Count</th></tr></thead>');
+            $("#keywordstable").append('<tbody></tbody>');
+            for (var i = 0; i < data.RepWordsFromMeta.length; i++) {
+                $("#keywordstable tbody").append('<tr><td>' + data.RepWordsFromMeta[i].Name + '</td><td>' + data.RepWordsFromMeta[i].Count + '</td></tr>');
+            }
+            $("#keywordstable").tablesorter();
+        }
+
+
+        if (!data.RepWordsFromMeta.length > 0) {
+            results.append('<b>Words in the page are absent</b><br>');
+        } else if ($("#filterwords").prop("checked")) {
+            results.append('<br><b>Number of occurrences on the page of each word</b><br>');
+            //Create second table with meta keywords
+            results.append('<table id="wordstable" class="tablesorter" cellspacing="0" width="50%"></table>');
+            $("#wordstable").append('<thead><tr><th>Keywords</th><th>Count</th></tr></thead>');
+            $("#wordstable").append('<tbody></tbody>');
+            for (var i = 0; i < data.RepWordsOnPage.length; i++) {
+                $("#wordstable tbody").append('<tr><td>' + data.RepWordsOnPage[i].Name + '</td><td>' + data.RepWordsOnPage[i].Count + '</td></tr>');
+            }
+            $("#wordstable").tablesorter();
+        }
+
+    }
+</script>
